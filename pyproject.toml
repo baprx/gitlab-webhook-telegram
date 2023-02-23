@@ -4,12 +4,12 @@
 # character.
 
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
 
 [tool.isort]
 atomic = true
 profile = "black"
-line_length = 88
+line_length = 100
 skip_gitignore = true
