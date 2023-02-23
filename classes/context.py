@@ -62,9 +62,7 @@ class Context:
             with open(f"{self.directory}verified_chats.json") as verified_chats_file:
                 self.verified_chats = json.load(verified_chats_file)
         except FileNotFoundError:
-            logging.warning(
-                f"File {self.directory}verified_chats.json not found. Assuming empty"
-            )
+            logging.warning(f"File {self.directory}verified_chats.json not found. Assuming empty")
             self.verified_chats = []
         except Exception as e:
             logging.critical(
@@ -81,9 +79,7 @@ class Context:
                     for chat_id in tmp[token]:
                         self.table[token][int(chat_id)] = tmp[token][chat_id]
         except FileNotFoundError:
-            logging.warning(
-                f"File {self.directory}chats_projects.json not found. Assuming empty"
-            )
+            logging.warning(f"File {self.directory}chats_projects.json not found. Assuming empty")
             self.table = {}
         except Exception as e:
             logging.critical(

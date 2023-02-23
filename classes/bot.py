@@ -77,9 +77,7 @@ class Bot:
         remove_project_handler = CommandHandler("removeProject", self.remove_project)
         self.dispatcher.add_handler(remove_project_handler)
 
-        change_verbosity_handler = CommandHandler(
-            "changeVerbosity", self.change_verbosity
-        )
+        change_verbosity_handler = CommandHandler("changeVerbosity", self.change_verbosity)
         self.dispatcher.add_handler(change_verbosity_handler)
 
         list_projects_handlers = CommandHandler("listProjects", self.list_projects)
@@ -95,9 +93,7 @@ class Bot:
 
         self.updater.start_polling()
 
-    def send_message(
-        self, chat_id: int, message: str, markup: InlineKeyboardMarkup = None
-    ) -> int:
+    def send_message(self, chat_id: int, message: str, markup: InlineKeyboardMarkup = None) -> int:
         """
         Send a message to a chat ID, split long text in multiple messages
         """
@@ -137,9 +133,7 @@ class Bot:
         """
         chat_id = update.message.chat_id
         bot = context.bot
-        bot.send_message(
-            chat_id=chat_id, text="Hi. I'm a simple bot triggered by GitLab webhooks."
-        )
+        bot.send_message(chat_id=chat_id, text="Hi. I'm a simple bot triggered by GitLab webhooks.")
         if chat_id in self.context.verified_chats:
             bot.send_message(
                 chat_id=chat_id,
@@ -153,10 +147,7 @@ class Bot:
             self.context.write_verified_chats()
             bot.send_message(
                 chat_id=chat_id,
-                text=(
-                    "Your chat is now verified, send /help to see the available"
-                    " commands."
-                ),
+                text=("Your chat is now verified, send /help to see the available" " commands."),
             )
         else:
             bot.send_message(
@@ -194,11 +185,7 @@ class Bot:
             if len(projects) > 0:
                 for project in projects:
                     inline_keyboard.append(
-                        [
-                            InlineKeyboardButton(
-                                text=project["name"], callback_data=project["token"]
-                            )
-                        ]
+                        [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
                     )
                 replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
                 bot.send_message(
@@ -234,11 +221,7 @@ class Bot:
             if len(projects) > 0:
                 for project in projects:
                     inline_keyboard.append(
-                        [
-                            InlineKeyboardButton(
-                                text=project["name"], callback_data=project["token"]
-                            )
-                        ]
+                        [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
                     )
                 replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
                 bot.send_message(
@@ -247,9 +230,7 @@ class Bot:
                     text="Choose the project from which you want to change verbosity.",
                 )
             else:
-                bot.send_message(
-                    chat_id=chat_id, text="No project configured on this chat."
-                )
+                bot.send_message(chat_id=chat_id, text="No project configured on this chat.")
         else:
             bot.send_message(
                 chat_id=chat_id,
@@ -276,11 +257,7 @@ class Bot:
             if len(projects) > 0:
                 for project in projects:
                     inline_keyboard.append(
-                        [
-                            InlineKeyboardButton(
-                                text=project["name"], callback_data=project["token"]
-                            )
-                        ]
+                        [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
                     )
                 replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
                 bot.send_message(
@@ -313,7 +290,7 @@ class Bot:
                 )
             else:
                 if token not in self.context.table:
-                    self.context.table[token] = {}
+                    self.context.table[token] = {chat_id: {}}
                 self.context.table[token][chat_id]["verbosity"] = VVVV
                 self.context.write_table()
                 bot.edit_message_text(
@@ -325,10 +302,7 @@ class Bot:
         elif self.context.button_mode == MODE_REMOVE_PROJECT:
             chat_id = query.message.chat_id
             token = query.data
-            if (
-                token not in self.context.table
-                or chat_id not in self.context.table[token]
-            ):
+            if token not in self.context.table or chat_id not in self.context.table[token]:
                 bot.edit_message_text(
                     text="Project was not there. Changing nothing.", chat_id=chat_id
                 )
@@ -347,11 +321,7 @@ class Bot:
             inline_keyboard = []
             for i, verbosity in enumerate(VERBOSITIES):
                 inline_keyboard.append(
-                    [
-                        InlineKeyboardButton(
-                            text=str(i) + ":" + verbosity[1], callback_data=i + 1
-                        )
-                    ]
+                    [InlineKeyboardButton(text=str(i) + ":" + verbosity[1], callback_data=i + 1)]
                 )
             replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
             message_verbosities = "Verbosities : \n"
@@ -367,9 +337,7 @@ class Bot:
             chat_id = query.message.chat_id
             self.context.button_mode = MODE_NONE
             verbosity = int(query.data) - 1
-            self.context.table[self.context.selected_project][chat_id][
-                "verbosity"
-            ] = verbosity
+            self.context.table[self.context.selected_project][chat_id]["verbosity"] = verbosity
             self.context.write_table()
             bot.edit_message_text(
                 chat_id=chat_id,

@@ -62,9 +62,7 @@ def tag_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> N
         message = f'New tag event on project {data["project"]["name"]}'
         if chat["verbosity"] >= VV:
             message += f'\nTag :{data["ref"].lstrip("refs/tags/")}'
-            message += (
-                f'\nURL : {data["project"]["web_url"]}/-/{data["ref"].lstrip("refs/")}'
-            )
+            message += f'\nURL : {data["project"]["web_url"]}/-/{data["ref"].lstrip("refs/")}'
         bot.send_message(chat_id=chat["id"], message=message)
 
 
@@ -77,9 +75,7 @@ def release_handler(data: dict, bot: Bot, chats: List[int], project_token: str) 
         if chat["verbosity"] >= VV:
             message += f'\nName : {data["name"]}'
             message += f'\nTag : {data["tag"]}'
-            message += (
-                f'\nDescription : {emojize(data["description"], language="alias")}'
-            )
+            message += f'\nDescription : {emojize(data["description"], language="alias")}'
             message += f'\nURL : {data["url"]}'
         bot.send_message(chat_id=chat["id"], message=message)
 
@@ -132,21 +128,17 @@ def note_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> 
             info = f'\nSnippet : {data["snippet"]["title"]}'
         message += f'on project {data["project"]["name"]}'
         message += info
-        message += (
-            f'\nNote : {emojize(data["object_attributes"]["note"], language="alias")}'
-        )
+        message += f'\nNote : {emojize(data["object_attributes"]["note"], language="alias")}'
         if chat["verbosity"] >= VV:
             message += f'\nURL : {data["object_attributes"]["url"]}'
         bot.send_message(chat_id=chat["id"], message=message)
 
 
-def merge_request_handler(
-    data: dict, bot: Bot, chats: List[int], project_token: str
-) -> None:
+def merge_request_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a merge request event is received
     """
-    ctx = bot.context.table[project_token]["merge_requests"]
+    ctx = bot.context.table[project_token].get("merge_requests", {})
     oa = data["object_attributes"]
     status = oa["state"]
     status_changed = True
@@ -168,9 +160,7 @@ def merge_request_handler(
     if "assignee" in data:
         message += f'<b>Assignee</b> {data["assignee"]["username"]}\n'
     url = f'{oa["url"]}'
-    reply_markup = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(text=STATUSES[status], url=url)]]
-    )
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text=STATUSES[status], url=url)]])
     for chat in chats:
         if chat["verbosity"] >= VVV and labels:
             message += f"<b>Labels</b> {labels}"
@@ -183,19 +173,15 @@ def merge_request_handler(
             else:
                 logging.info(f"WebHook received for Job {mr_id} with unchanged status")
         else:
-            message_id = bot.send_message(
-                chat_id=chat["id"], message=message, markup=reply_markup
-            )
+            message_id = bot.send_message(chat_id=chat["id"], message=message, markup=reply_markup)
             ctx[mr_id]["message_id"] = message_id
 
 
-def job_event_handler(
-    data: dict, bot: Bot, chats: List[int], project_token: str
-) -> None:
+def job_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a job event is received
     """
-    ctx = bot.context.table[project_token]["jobs"]
+    ctx = bot.context.table[project_token].get("jobs", {})
     status = data["build_status"]
     status_changed = True
     job_id = data["build_id"]
@@ -209,9 +195,7 @@ def job_event_handler(
     message = f'<b>Project</b> {data["repository"]["name"]}\n'
     message += f"<b>Job ID</b> {job_id}\n\n"
     url = f'{data["repository"]["homepage"]}/-/jobs/{job_id}'
-    reply_markup = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(text=STATUSES[status], url=url)]]
-    )
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text=STATUSES[status], url=url)]])
     for chat in chats:
         if chat["verbosity"] >= VV:
             message += f'<b>Job name</b> {data["build_name"]}\n'
@@ -227,15 +211,11 @@ def job_event_handler(
             else:
                 logging.info(f"WebHook received for Job {job_id} with unchanged status")
         else:
-            message_id = bot.send_message(
-                chat_id=chat["id"], message=message, markup=reply_markup
-            )
+            message_id = bot.send_message(chat_id=chat["id"], message=message, markup=reply_markup)
             ctx[job_id]["message_id"] = message_id
 
 
-def wiki_event_handler(
-    data: dict, bot: Bot, chats: List[int], project_token: str
-) -> None:
+def wiki_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a wiki page event is received
     """
@@ -246,13 +226,11 @@ def wiki_event_handler(
         bot.send_message(chat_id=chat["id"], message=message)
 
 
-def pipeline_handler(
-    data: dict, bot: Bot, chats: List[int], project_token: str
-) -> None:
+def pipeline_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the hander for when a pipeline event is received
     """
-    ctx = bot.context.table[project_token]["pipelines"]
+    ctx = bot.context.table[project_token].get("pipelines", {})
     status = data["object_attributes"]["status"]
     status_changed = True
     pipeline_id = data["object_attributes"]["id"]
@@ -267,9 +245,7 @@ def pipeline_handler(
     message += f"<b>Pipeline ID</b> {pipeline_id}\n\n"
     message += f'<b>Commit title</b> {data["commit"]["title"]}\n'
     url = f'{data["project"]["web_url"]}/-/pipelines/{pipeline_id}'
-    reply_markup = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(text=STATUSES[status], url=url)]]
-    )
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text=STATUSES[status], url=url)]])
     for chat in chats:
         if "message_id" in ctx[pipeline_id]:
             message_id = ctx[pipeline_id]["message_id"]
@@ -279,11 +255,8 @@ def pipeline_handler(
                 )
             else:
                 logging.info(
-                    "WebHook received for Pipeline"
-                    f" {pipeline_id} with unchanged status"
+                    "WebHook received for Pipeline" f" {pipeline_id} with unchanged status"
                 )
         else:
-            message_id = bot.send_message(
-                chat_id=chat["id"], message=message, markup=reply_markup
-            )
+            message_id = bot.send_message(chat_id=chat["id"], message=message, markup=reply_markup)
             ctx[pipeline_id]["message_id"] = message_id

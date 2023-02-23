@@ -89,9 +89,7 @@ def get_RequestHandler(bot: Bot, context: CallbackContext) -> RequestHandlerType
                         chats = [
                             {
                                 "id": chat,
-                                "verbosity": self.context.table[token][chat][
-                                    "verbosity"
-                                ],
+                                "verbosity": self.context.table[token][chat]["verbosity"],
                             }
                             for chat in self.context.table[token]
                             if chat in self.context.verified_chats
@@ -136,9 +134,7 @@ class App:
             logging.critical("Failed to grab bot. Stopping here the program.")
             logging.critical("Exception : " + str(e))
             sys.exit()
-        logging.info(
-            "Starting server on http://localhost:" + str(context.config["port"])
-        )
+        logging.info("Starting server on http://localhost:" + str(context.config["port"]))
         try:
             RequestHandler = get_RequestHandler(bot, context)
             socketserver.TCPServer.allow_reuse_address = True
