@@ -1,5 +1,5 @@
 ---
-version: '3.9'
+version: "3.9"
 
 services:
   gitlab-webhook-telegram:
@@ -12,3 +12,5 @@ services:
     volumes:
       - ./configs:/app/configs
     restart: unless-stopped
+    labels:
+      - traefik.enable=false

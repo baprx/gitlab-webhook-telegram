@@ -1,7 +1,15 @@
 {
     "port": 8080,
     "telegram-token": "",
-    "passphrase": "Here we go !",
-    "gitlab-projects": [],
+    "passphrase": "HfKTXQjIOQ76chp8FbhnjyRZDA7A5XPnHCtFvRUhcjUZ4oHBiC",
+    "gitlab-projects": [
+        {
+            "name": "gitlab-1",
+            "token": "dXx9qR9wOrnkAq8A0PWBAV5FuydLe4",
+            "user-ids": [
+                "xxxxxxxxx"
+            ]
+        }
+    ],
     "log-level": "warning"
 }
