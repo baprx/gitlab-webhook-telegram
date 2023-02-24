@@ -34,7 +34,7 @@ STATUSES = {
 }
 
 
-def push_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def push_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a commit event is received
     """
@@ -51,10 +51,10 @@ def push_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> 
             if chat["verbosity"] >= VV:
                 message += f'\nUrl : {commit["url"]}'
 
-            bot.send_message(chat_id=chat["id"], message=message)
+            await bot.send_message(chat_id=chat["id"], message=message)
 
 
-def tag_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def tag_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a tag event is received
     """
@@ -63,10 +63,10 @@ def tag_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> N
         if chat["verbosity"] >= VV:
             message += f'\nTag :{data["ref"].lstrip("refs/tags/")}'
             message += f'\nURL : {data["project"]["web_url"]}/-/{data["ref"].lstrip("refs/")}'
-        bot.send_message(chat_id=chat["id"], message=message)
+        await bot.send_message(chat_id=chat["id"], message=message)
 
 
-def release_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def release_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a release event is received
     """
@@ -77,10 +77,10 @@ def release_handler(data: dict, bot: Bot, chats: List[int], project_token: str) 
             message += f'\nTag : {data["tag"]}'
             message += f'\nDescription : {emojize(data["description"], language="alias")}'
             message += f'\nURL : {data["url"]}'
-        bot.send_message(chat_id=chat["id"], message=message)
+        await bot.send_message(chat_id=chat["id"], message=message)
 
 
-def issue_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def issue_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when an issue event is received
     """
@@ -105,10 +105,10 @@ def issue_handler(data: dict, bot: Bot, chats: List[int], project_token: str) ->
             due_date = oa["due_date"]
             if due_date:
                 message += f"\nDue date : {due_date}"
-        bot.send_message(chat_id=chat["id"], message=message)
+        await bot.send_message(chat_id=chat["id"], message=message)
 
 
-def note_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def note_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a note event is received
     """
@@ -131,10 +131,10 @@ def note_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> 
         message += f'\nNote : {emojize(data["object_attributes"]["note"], language="alias")}'
         if chat["verbosity"] >= VV:
             message += f'\nURL : {data["object_attributes"]["url"]}'
-        bot.send_message(chat_id=chat["id"], message=message)
+        await bot.send_message(chat_id=chat["id"], message=message)
 
 
-def merge_request_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def merge_request_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a merge request event is received
     """
@@ -167,17 +167,19 @@ def merge_request_handler(data: dict, bot: Bot, chats: List[int], project_token:
         if "message_id" in ctx[mr_id]:
             message_id = ctx[mr_id]["message_id"]
             if status_changed:
-                bot.bot.edit_message_reply_markup(
+                await bot.bot.edit_message_reply_markup(
                     chat_id=chat["id"], message_id=message_id, reply_markup=reply_markup
                 )
             else:
                 logging.info(f"WebHook received for Job {mr_id} with unchanged status")
         else:
-            message_id = bot.send_message(chat_id=chat["id"], message=message, markup=reply_markup)
+            message_id = await bot.send_message(
+                chat_id=chat["id"], message=message, markup=reply_markup
+            )
             ctx[mr_id]["message_id"] = message_id
 
 
-def job_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def job_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a job event is received
     """
@@ -205,17 +207,19 @@ def job_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str
         if "message_id" in ctx[job_id]:
             message_id = ctx[job_id]["message_id"]
             if status_changed:
-                bot.bot.edit_message_reply_markup(
+                await bot.bot.edit_message_reply_markup(
                     chat_id=chat["id"], message_id=message_id, reply_markup=reply_markup
                 )
             else:
                 logging.info(f"WebHook received for Job {job_id} with unchanged status")
         else:
-            message_id = bot.send_message(chat_id=chat["id"], message=message, markup=reply_markup)
+            message_id = await bot.send_message(
+                chat_id=chat["id"], message=message, markup=reply_markup
+            )
             ctx[job_id]["message_id"] = message_id
 
 
-def wiki_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def wiki_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the handler for when a wiki page event is received
     """
@@ -223,10 +227,10 @@ def wiki_event_handler(data: dict, bot: Bot, chats: List[int], project_token: st
         message = f'New wiki page event on project {data["project"]["name"]}'
         if chat["verbosity"] >= VV:
             message += f'\nURL : {data["wiki"]["web_url"]}'
-        bot.send_message(chat_id=chat["id"], message=message)
+        await bot.send_message(chat_id=chat["id"], message=message)
 
 
-def pipeline_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def pipeline_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
     """
     Defines the hander for when a pipeline event is received
     """
@@ -250,7 +254,7 @@ def pipeline_handler(data: dict, bot: Bot, chats: List[int], project_token: str)
         if "message_id" in ctx[pipeline_id]:
             message_id = ctx[pipeline_id]["message_id"]
             if status_changed:
-                bot.bot.edit_message_reply_markup(
+                await bot.bot.edit_message_reply_markup(
                     chat_id=chat["id"], message_id=message_id, reply_markup=reply_markup
                 )
             else:
@@ -258,5 +262,7 @@ def pipeline_handler(data: dict, bot: Bot, chats: List[int], project_token: str)
                     "WebHook received for Pipeline" f" {pipeline_id} with unchanged status"
                 )
         else:
-            message_id = bot.send_message(chat_id=chat["id"], message=message, markup=reply_markup)
+            message_id = await bot.send_message(
+                chat_id=chat["id"], message=message, markup=reply_markup
+            )
             ctx[pipeline_id]["message_id"] = message_id

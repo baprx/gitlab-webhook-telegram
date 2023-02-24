@@ -4,15 +4,10 @@
 gitlab-webhook-telegram
 """
 
-import json
+import asyncio
 import logging
-import os
-import socketserver
-import sys
-from http.server import BaseHTTPRequestHandler
-from typing import TypeVar
 
-from telegram.ext import CallbackContext
+from aiohttp import web
 
 import handlers
 from classes.bot import Bot
@@ -45,68 +40,7 @@ HANDLERS = {
 }
 
 
-RequestHandlerType = TypeVar(
-    "RequestHandlerType",
-    bound="BaseHTTPRequestHandler",
-)
-
-
-def get_RequestHandler(bot: Bot, context: CallbackContext) -> RequestHandlerType:
-    """
-    A wrapper for the RequestHandler class to pass parameters
-    """
-
-    class RequestHandler(BaseHTTPRequestHandler):
-        """
-        The server request handler
-        """
-
-        def __init__(self, *args, **kwargs) -> None:
-            self.bot = bot
-            self.context = context
-            super().__init__(*args, **kwargs)
-
-        def _set_headers(self, code: int) -> None:
-            """
-            Send response with code and close headers
-            """
-            self.send_response(code)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-
-        def do_POST(self) -> None:
-            """
-            Handler for POST requests
-            """
-            token = self.headers["X-Gitlab-Token"]
-            if self.context.is_authorized_project(token):
-                type = self.headers["X-Gitlab-Event"]
-                content_length = int(self.headers["Content-Length"])
-                data = self.rfile.read(content_length)
-                body = json.loads(data.decode("utf-8"))
-                if type in HANDLERS:
-                    if token in self.context.table and self.context.table[token]:
-                        chats = [
-                            {
-                                "id": chat,
-                                "verbosity": self.context.table[token][chat]["verbosity"],
-                            }
-                            for chat in self.context.table[token]
-                            if chat in self.context.verified_chats
-                        ]
-                        HANDLERS[type](body, bot, chats, token)
-                        self._set_headers(200)
-                    else:
-                        logging.warning("No chats.")
-                        self._set_headers(200)
-                else:
-                    logging.error("No handler for the event " + type)
-                    self._set_headers(404)
-            else:
-                logging.warning("Unauthorized project : token not in config.json")
-                self._set_headers(403)
-
-    return RequestHandler
+routes = web.RouteTableDef()
 
 
 class App:
@@ -115,34 +49,54 @@ class App:
     Override init and run command
     """
 
-    def __init__(self, directory: str) -> None:
-        self.directory = directory
+    def __init__(self, context: Context, bot: Bot) -> None:
+        self.context = context
+        self.bot = bot
 
-    def run(self) -> None:
+    @routes.post("/")
+    async def handle_post(self, request):
+        token = request.headers["X-Gitlab-Token"]
+        if self.context.is_authorized_project(token):
+            type = request.headers["X-Gitlab-Event"]
+            body = await request.json()
+            if type in HANDLERS:
+                if token in self.context.table and self.context.table[token]:
+                    chats = [
+                        {
+                            "id": chat,
+                            "verbosity": self.context.table[token]["users"][chat]["verbosity"],
+                        }
+                        for chat in self.context.table[token]["users"]
+                        if chat in self.context.verified_chats
+                    ]
+                    await HANDLERS[type](body, self.bot, chats, token)
+                    raise web.HTTPOk
+                else:
+                    logging.warning("No user has subscribed to this project.")
+                    raise web.HTTPOk
+            else:
+                logging.error("No handler for the event " + type)
+                raise web.HTTPNotImplemented
+        else:
+            logging.warning("Unauthorized Gitlab webhook : token not in config.json")
+            raise web.HTTPForbidden
+
+    async def run_web_server(self):
+        app = web.Application()
+        app.add_routes([web.post("/", self.handle_post)])
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, "localhost", self.context.config["port"])
+        await site.start()
+
+    async def run(self, bot: Bot, context: Context):
         """
         run is called when the app starts
         """
-        context = Context(self.directory)
-        context.get_config()
-        context.migrate_table_config()
-        logging.info("Starting gitlab-webhook-telegram app")
-        logging.debug("Getting bot with token " + context.config["telegram-token"])
-        try:
-            bot = Bot(context.config["telegram-token"], context)
-            logging.info("Bot " + bot.username + " grabbed. Let's go.")
-        except Exception as e:
-            logging.critical("Failed to grab bot. Stopping here the program.")
-            logging.critical("Exception : " + str(e))
-            sys.exit()
-        logging.info("Starting server on http://localhost:" + str(context.config["port"]))
-        try:
-            RequestHandler = get_RequestHandler(bot, context)
-            socketserver.TCPServer.allow_reuse_address = True
-            httpd = socketserver.TCPServer(("", context.config["port"]), RequestHandler)
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            logging.info("Keyboard interruption received. Shutting down the server")
-        httpd.server_close()
-        httpd.shutdown()
-        logging.info("Server is down")
-        os._exit(0)
+        logging.info(
+            "Starting gitlab-webhook-telegram app on http://localhost:"
+            + str(context.config["port"])
+        )
+        await self.run_web_server()
+        while True:
+            await asyncio.sleep(15)

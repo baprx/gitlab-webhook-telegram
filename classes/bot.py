@@ -4,16 +4,17 @@
 gitlab-webhook-telegram
 """
 
+import logging
 import time
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
+    Application,
     CallbackContext,
     CallbackQueryHandler,
     CommandHandler,
-    Filters,
     MessageHandler,
-    Updater,
+    filters,
 )
 
 from classes.context import Context
@@ -54,6 +55,8 @@ VERBOSITIES = [
     ),
 ]
 
+# https://stackoverflow.com/a/72947553/11819893
+
 
 class Bot:
     """
@@ -63,43 +66,40 @@ class Bot:
     def __init__(self, token: str, context: Context) -> None:
         self.token = token
         self.context = context
-        self.updater = Updater(token=self.token, use_context=True)
-        self.bot = self.updater.bot
+        self.application = Application.builder().token(self.token).build()
+        self.application.add_handler(CommandHandler("start", self.start, block=False))
+        self.application.add_handler(CommandHandler("addProject", self.add_project, block=False))
+        self.application.add_handler(
+            CommandHandler("removeProject", self.remove_project, block=False)
+        )
+        self.application.add_handler(
+            CommandHandler("changeVerbosity", self.change_verbosity, block=False)
+        )
+        self.application.add_handler(
+            CommandHandler("listProjects", self.list_projects, block=False)
+        )
+        self.application.add_handler(CommandHandler("help", self.help, block=False))
+        self.application.add_handler(CallbackQueryHandler(self.button, block=False))
+        self.application.add_handler(MessageHandler(filters.TEXT, self.message, block=False))
+        self.bot = self.application.bot
+        self.username = None
+
+    async def run(self):
+        await self.application.initialize()
+        await self.application.start()
+        await self.application.updater.start_polling()
         self.username = self.bot.username
-        self.dispatcher = self.updater.dispatcher
+        logging.info("Bot " + self.username + " grabbed. Let's go.")
 
-        start_handler = CommandHandler("start", self.start)
-        self.dispatcher.add_handler(start_handler)
-
-        add_project_handler = CommandHandler("addProject", self.add_project)
-        self.dispatcher.add_handler(add_project_handler)
-
-        remove_project_handler = CommandHandler("removeProject", self.remove_project)
-        self.dispatcher.add_handler(remove_project_handler)
-
-        change_verbosity_handler = CommandHandler("changeVerbosity", self.change_verbosity)
-        self.dispatcher.add_handler(change_verbosity_handler)
-
-        list_projects_handlers = CommandHandler("listProjects", self.list_projects)
-        self.dispatcher.add_handler(list_projects_handlers)
-
-        help_hanlder = CommandHandler("help", self.help)
-        self.dispatcher.add_handler(help_hanlder)
-
-        self.dispatcher.add_handler(CallbackQueryHandler(self.button))
-
-        message_handler = MessageHandler(Filters.text, self.message)
-        self.dispatcher.add_handler(message_handler)
-
-        self.updater.start_polling()
-
-    def send_message(self, chat_id: int, message: str, markup: InlineKeyboardMarkup = None) -> int:
+    async def send_message(
+        self, chat_id: int, message: str, markup: InlineKeyboardMarkup = None
+    ) -> int:
         """
         Send a message to a chat ID, split long text in multiple messages
         """
         max_message_length = 4096
         if len(message) <= max_message_length:
-            message = self.bot.send_message(
+            message = await self.bot.send_message(
                 chat_id=chat_id,
                 text=message,
                 reply_markup=markup,
@@ -121,21 +121,24 @@ class Bot:
                 parts.append(message)
                 break
         for part in parts:
-            message = self.bot.send_message(
+            message = await self.bot.send_message(
                 chat_id=chat_id, text=part, reply_markup=markup, parse_mode="HTML"
             )
             time.sleep(0.25)
         return message.message_id
 
-    def start(self, update: Update, context: CallbackContext) -> None:
+    async def start(self, update: Update, context: CallbackContext) -> None:
         """
         Defines the handler for /start command
         """
         chat_id = update.message.chat_id
         bot = context.bot
-        bot.send_message(chat_id=chat_id, text="Hi. I'm a simple bot triggered by GitLab webhooks.")
+        self.username = context.bot.username
+        await bot.send_message(
+            chat_id=chat_id, text="Hi. I'm a simple bot triggered by GitLab webhooks."
+        )
         if chat_id in self.context.verified_chats:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text=(
                     "Since your chat is already verified, send /help to see the"
@@ -145,12 +148,12 @@ class Bot:
         elif not self.context.config["passphrase"]:
             self.context.verified_chats.append(chat_id)
             self.context.write_verified_chats()
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text=("Your chat is now verified, send /help to see the available" " commands."),
             )
         else:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text=(
                     "First things first : you need to verify this chat. Just send me"
@@ -159,7 +162,7 @@ class Bot:
             )
             self.context.wait_for_verification = True
 
-    def add_project(self, update: Update, context: CallbackContext) -> None:
+    async def add_project(self, update: Update, context: CallbackContext) -> None:
         """
         Defines the handler for /addProject command
         """
@@ -188,20 +191,20 @@ class Bot:
                         [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
                     )
                 replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-                bot.send_message(
+                await bot.send_message(
                     chat_id=chat_id,
                     reply_markup=replyKeyboard,
                     text="Choose the project you want to add.",
                 )
             else:
-                bot.send_message(chat_id=chat_id, text="No project to add.")
+                await bot.send_message(chat_id=chat_id, text="No project to add.")
         else:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text="This chat is not verified, start with the command /start.",
             )
 
-    def change_verbosity(self, update: Update, context: CallbackContext) -> None:
+    async def change_verbosity(self, update: Update, context: CallbackContext) -> None:
         """
         Defines the handler for /changeVerbosity command
         """
@@ -215,7 +218,7 @@ class Bot:
                 for project in self.context.config["gitlab-projects"]
                 if (
                     project["token"] in self.context.table
-                    and chat_id in self.context.table[project["token"]]
+                    and chat_id in self.context.table[project["token"]]["users"]
                 )
             ]
             if len(projects) > 0:
@@ -224,20 +227,20 @@ class Bot:
                         [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
                     )
                 replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-                bot.send_message(
+                await bot.send_message(
                     chat_id=chat_id,
                     reply_markup=replyKeyboard,
                     text="Choose the project from which you want to change verbosity.",
                 )
             else:
-                bot.send_message(chat_id=chat_id, text="No project configured on this chat.")
+                await bot.send_message(chat_id=chat_id, text="No project configured on this chat.")
         else:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text="This chat is not verified, start with the command /start.",
             )
 
-    def remove_project(self, update: Update, context: CallbackContext) -> None:
+    async def remove_project(self, update: Update, context: CallbackContext) -> None:
         """
         Defines the handler for /removeProject command
         """
@@ -251,7 +254,7 @@ class Bot:
                 for project in self.context.config["gitlab-projects"]
                 if (
                     project["token"] in self.context.table
-                    and chat_id in self.context.table[project["token"]]
+                    and chat_id in self.context.table[project["token"]]["users"]
                 )
             ]
             if len(projects) > 0:
@@ -260,20 +263,20 @@ class Bot:
                         [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
                     )
                 replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-                bot.send_message(
+                await bot.send_message(
                     chat_id=chat_id,
                     reply_markup=replyKeyboard,
                     text="Choose the project you want to remove.",
                 )
             else:
-                bot.send_message(chat_id=chat_id, text="No project to remove.")
+                await bot.send_message(chat_id=chat_id, text="No project to remove.")
         else:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text="This chat is not verified, start with the command /start.",
             )
 
-    def button(self, update: Update, context: CallbackContext) -> None:
+    async def button(self, update: Update, context: CallbackContext) -> None:
         """
         Defines the handler for a click on button
         """
@@ -282,18 +285,20 @@ class Bot:
         if self.context.button_mode == MODE_ADD_PROJECT:
             token = query.data
             chat_id = query.message.chat_id
-            if token in self.context.table and chat_id in self.context.table[token]:
-                bot.edit_message_text(
+            if token in self.context.table and chat_id in self.context.table[token]["users"]:
+                await bot.edit_message_text(
                     text="Project was already there. Changing nothing.",
                     chat_id=chat_id,
                     message_id=query.message.message_id,
                 )
             else:
                 if token not in self.context.table:
-                    self.context.table[token] = {chat_id: {}}
-                self.context.table[token][chat_id]["verbosity"] = VVVV
+                    self.context.table[token] = {"users": {chat_id: {}}}
+                elif chat_id not in self.context.table[token]["users"]:
+                    self.context.table[token]["users"][chat_id] = {}
+                self.context.table[token]["users"][chat_id]["verbosity"] = VVVV
                 self.context.write_table()
-                bot.edit_message_text(
+                await bot.edit_message_text(
                     text="The project was successfully added.",
                     chat_id=chat_id,
                     message_id=query.message.message_id,
@@ -302,14 +307,14 @@ class Bot:
         elif self.context.button_mode == MODE_REMOVE_PROJECT:
             chat_id = query.message.chat_id
             token = query.data
-            if token not in self.context.table or chat_id not in self.context.table[token]:
-                bot.edit_message_text(
+            if token not in self.context.table or chat_id not in self.context.table[token]["users"]:
+                await bot.edit_message_text(
                     text="Project was not there. Changing nothing.", chat_id=chat_id
                 )
             else:
-                del self.context.table[token][chat_id]
+                del self.context.table[token]["users"][chat_id]
                 self.context.write_table()
-                bot.edit_message_text(
+                await bot.edit_message_text(
                     text="The project was successfully removed.",
                     chat_id=chat_id,
                     message_id=query.message.message_id,
@@ -327,7 +332,7 @@ class Bot:
             message_verbosities = "Verbosities : \n"
             for verb in VERBOSITIES:
                 message_verbosities += "- " + str(verb[0]) + " : " + verb[1] + "\n"
-            bot.edit_message_text(
+            await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=query.message.message_id,
                 reply_markup=replyKeyboard,
@@ -339,7 +344,7 @@ class Bot:
             verbosity = int(query.data) - 1
             self.context.table[self.context.selected_project][chat_id]["verbosity"] = verbosity
             self.context.write_table()
-            bot.edit_message_text(
+            await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=query.message.message_id,
                 text="The verbosity of the project has been changed.",
@@ -348,7 +353,7 @@ class Bot:
         else:
             pass
 
-    def message(self, update: Update, context: CallbackContext) -> None:
+    async def message(self, update: Update, context: CallbackContext) -> None:
         """
         The handler in case a simple message is posted
         """
@@ -357,7 +362,7 @@ class Bot:
             if update.message.text == self.context.config["passphrase"]:
                 self.context.verified_chats.append(update.message.chat_id)
                 self.context.write_verified_chats()
-                bot.send_message(
+                await bot.send_message(
                     chat_id=update.message.chat_id,
                     text=(
                         "Thank you, your user ID is now verified. Send /help to see the"
@@ -366,12 +371,12 @@ class Bot:
                 )
                 self.context.wait_for_verification = False
             else:
-                bot.send_message(
+                await bot.send_message(
                     chat_id=update.message.chat_id,
                     text="The passphrase is incorrect. Still waiting for verification.",
                 )
 
-    def help(self, update: Update, context: CallbackContext) -> None:
+    async def help(self, update: Update, context: CallbackContext) -> None:
         """
         Defines the handler for /help command
         """
@@ -383,9 +388,9 @@ class Bot:
         message += "/removeProject : remove a project from this chat\n"
         message += "/changeVerbosity : change the level of information of a chat\n"
         message += "/help : display this message"
-        bot.send_message(chat_id=update.message.chat_id, text=message)
+        await bot.send_message(chat_id=update.message.chat_id, text=message)
 
-    def list_projects(self, update: Update, context: CallbackContext) -> None:
+    async def list_projects(self, update: Update, context: CallbackContext) -> None:
         chat_id = update.message.chat_id
         bot = context.bot
         projects = [
@@ -393,7 +398,7 @@ class Bot:
             for project in self.context.config["gitlab-projects"]
             if (
                 project["token"] in self.context.table
-                and chat_id in self.context.table[project["token"]]
+                and chat_id in self.context.table[project["token"]].get("users", [])
             )
         ]
         message = "Projects : \n"
@@ -402,6 +407,6 @@ class Bot:
         for id, project in enumerate(projects):
             message += (
                 f'{id+1} - <b>{project["name"]}</b> (Verbosity:'
-                f' {self.context.table[project["token"]][chat_id]["verbosity"]})\n'
+                f' {self.context.table[project["token"]]["users"][chat_id]["verbosity"]})\n'
             )
-        bot.send_message(chat_id=chat_id, text=message, parse_mode="HTML")
+        await bot.send_message(chat_id=chat_id, text=message, parse_mode="HTML")
