@@ -73,11 +73,11 @@ class Context:
         try:
             with open(f"{self.directory}chats_projects.json") as table_file:
                 self.table = {}
-                tmp = json.load(table_file)
-                for token in tmp:
-                    self.table[token] = {}
-                    for chat_id in tmp[token]:
-                        self.table[token][int(chat_id)] = tmp[token][chat_id]
+                data = json.load(table_file)
+                for token, users in data.items():
+                    self.table[token] = {"users": {}}
+                    for chat_id, preferences in users.get("users", {}).items():
+                        self.table[token]["users"][int(chat_id)] = preferences
         except FileNotFoundError:
             logging.warning(f"File {self.directory}chats_projects.json not found. Assuming empty")
             self.table = {}
@@ -97,7 +97,6 @@ class Context:
             for kind in ("jobs", "pipelines", "merge_requests"):
                 if kind not in self.table[token]:
                     self.table[token][kind] = {}
-                    logging.info(f"'{kind}' key missing from table, adding now")
         return self.table
 
     def write_verified_chats(self) -> None:
@@ -118,8 +117,7 @@ class Context:
         """
         Test if the token is in the configuration
         """
-        res = False
         for projet in self.config["gitlab-projects"]:
             if token == projet["token"]:
-                res = True
-        return res
+                return True
+        return False
