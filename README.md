@@ -53,13 +53,14 @@ export GWT_DIR=/etc/gwt/
 
 See the configuration options:
 
-| Parameter         | Type       | Default value    | Description                                                                            |
-| ----------------- | ---------- | ---------------- | -------------------------------------------------------------------------------------- |
-| `port`            | integer    | 8080             | The device port on which the web server should run.                                    |
-| `telegram-token`  | string     | `""`             | The value of the telegram bot token.                                                   |
-| `passphrase`      | string     | `"Here we go !"` | An optional passphrase to verify chats when. Set it to `null` to disable verification. |
-| `gitlab-projects` | list(dict) | `[]`             | An array of preconfigured projects. See below.                                         |
-| `log-level`       | string     | `"WARNING"`      | The log level.                                                                         |
+| Parameter         | Type              | Default value    | Description                                                                                                           |
+| ----------------- | ----------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `port`            | optional(integer) | 8080             | The device port on which the web server should run.                                                                   |
+| `address`         | optional(string)  | `"0.0.0.0"`      | The device IP address the web server should listen to.                                                                |
+| `telegram-token`  | string            | `""`             | The value of the telegram bot token.                                                                                  |
+| `passphrase`      | string            | `"Here we go !"` | An optional passphrase to verify chats when users run the command `/start`. Set it to `null` to disable verification. |
+| `gitlab-projects` | list(dict)        | `[]`             | An array of preconfigured projects. See below.                                                                        |
+| `log-level`       | optional(string)  | `"INFO"`         | The log level.                                                                                                        |
 
 The array of `gitlab-projects` should contain name and token for each project :
 
