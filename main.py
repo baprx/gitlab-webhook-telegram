@@ -5,7 +5,6 @@ gitlab-webhook-telegram
 """
 
 import asyncio
-import logging
 import os
 
 from classes.app import App
@@ -20,12 +19,9 @@ async def main():
     context.migrate_table_config()
     bot = Bot(token=context.config["telegram-token"], context=context)
     app = App(bot=bot, context=context)
-    try:
-        async with bot.application:
-            await bot.run()
-            await app.run(bot=bot, context=context)
-    except Exception:
-        logging.critical("Critical error, application exiting.")
+    async with bot.application:
+        await bot.run()
+        await app.run(bot=bot, context=context)
         await bot.application.updater.stop()
         await bot.application.stop()
         await bot.application.shutdown()
