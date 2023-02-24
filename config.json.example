@@ -1,5 +1,6 @@
 {
     "port": 8080,
+    "address": "0.0.0.0",
     "telegram-token": "",
     "passphrase": "HfKTXQjIOQ76chp8FbhnjyRZDA7A5XPnHCtFvRUhcjUZ4oHBiC",
     "gitlab-projects": [

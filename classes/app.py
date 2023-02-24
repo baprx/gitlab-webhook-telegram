@@ -86,7 +86,7 @@ class App:
         app.add_routes([web.post("/", self.handle_post)])
         runner = web.AppRunner(app)
         await runner.setup()
-        site = web.TCPSite(runner, "localhost", self.context.config["port"])
+        site = web.TCPSite(runner, self.context.config["address"], self.context.config["port"])
         await site.start()
 
     async def run(self, bot: Bot, context: Context):
