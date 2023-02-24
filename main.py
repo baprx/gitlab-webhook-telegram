@@ -12,7 +12,7 @@ from classes.bot import Bot
 from classes.context import Context
 
 
-async def main():
+async def main() -> None:
     directory = os.getenv("GWT_DIR", "./configs/")
     context = Context(directory)
     context.get_config()
@@ -21,7 +21,7 @@ async def main():
     app = App(bot=bot, context=context)
     async with bot.application:
         await bot.run()
-        await app.run(bot=bot, context=context)
+        await app.run()
         await bot.application.updater.stop()
         await bot.application.stop()
         await bot.application.shutdown()

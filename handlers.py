@@ -34,7 +34,7 @@ STATUSES = {
 }
 
 
-async def push_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def push_handler(data: dict, bot: Bot, chats: List[int]) -> None:
     """
     Defines the handler for when a commit event is received
     """
@@ -54,7 +54,7 @@ async def push_handler(data: dict, bot: Bot, chats: List[int], project_token: st
             await bot.send_message(chat_id=chat["id"], message=message)
 
 
-async def tag_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def tag_handler(data: dict, bot: Bot, chats: List[int]) -> None:
     """
     Defines the handler for when a tag event is received
     """
@@ -66,7 +66,7 @@ async def tag_handler(data: dict, bot: Bot, chats: List[int], project_token: str
         await bot.send_message(chat_id=chat["id"], message=message)
 
 
-async def release_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def release_handler(data: dict, bot: Bot, chats: List[int]) -> None:
     """
     Defines the handler for when a release event is received
     """
@@ -80,7 +80,7 @@ async def release_handler(data: dict, bot: Bot, chats: List[int], project_token:
         await bot.send_message(chat_id=chat["id"], message=message)
 
 
-async def issue_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def issue_handler(data: dict, bot: Bot, chats: List[int]) -> None:
     """
     Defines the handler for when an issue event is received
     """
@@ -108,7 +108,7 @@ async def issue_handler(data: dict, bot: Bot, chats: List[int], project_token: s
         await bot.send_message(chat_id=chat["id"], message=message)
 
 
-async def note_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def note_handler(data: dict, bot: Bot, chats: List[int]) -> None:
     """
     Defines the handler for when a note event is received
     """
@@ -219,7 +219,7 @@ async def job_event_handler(data: dict, bot: Bot, chats: List[int], project_toke
             ctx[job_id]["message_id"] = message_id
 
 
-async def wiki_event_handler(data: dict, bot: Bot, chats: List[int], project_token: str) -> None:
+async def wiki_event_handler(data: dict, bot: Bot, chats: List[int]) -> None:
     """
     Defines the handler for when a wiki page event is received
     """

@@ -55,8 +55,6 @@ VERBOSITIES = [
     ),
 ]
 
-# https://stackoverflow.com/a/72947553/11819893
-
 
 class Bot:
     """
@@ -185,19 +183,18 @@ class Bot:
                     )
                 )
             ]
-            if len(projects) > 0:
-                for project in projects:
-                    inline_keyboard.append(
-                        [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
-                    )
-                replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-                await bot.send_message(
-                    chat_id=chat_id,
-                    reply_markup=replyKeyboard,
-                    text="Choose the project you want to add.",
-                )
-            else:
+            if not projects:
                 await bot.send_message(chat_id=chat_id, text="No project to add.")
+            for project in projects:
+                inline_keyboard.append(
+                    [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
+                )
+            replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+            await bot.send_message(
+                chat_id=chat_id,
+                reply_markup=replyKeyboard,
+                text="Choose the project you want to add.",
+            )
         else:
             await bot.send_message(
                 chat_id=chat_id,
@@ -221,19 +218,18 @@ class Bot:
                     and chat_id in self.context.table[project["token"]]["users"]
                 )
             ]
-            if len(projects) > 0:
-                for project in projects:
-                    inline_keyboard.append(
-                        [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
-                    )
-                replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-                await bot.send_message(
-                    chat_id=chat_id,
-                    reply_markup=replyKeyboard,
-                    text="Choose the project from which you want to change verbosity.",
-                )
-            else:
+            if not projects:
                 await bot.send_message(chat_id=chat_id, text="No project configured on this chat.")
+            for project in projects:
+                inline_keyboard.append(
+                    [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
+                )
+            replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+            await bot.send_message(
+                chat_id=chat_id,
+                reply_markup=replyKeyboard,
+                text="Choose the project from which you want to change verbosity.",
+            )
         else:
             await bot.send_message(
                 chat_id=chat_id,
@@ -257,19 +253,18 @@ class Bot:
                     and chat_id in self.context.table[project["token"]]["users"]
                 )
             ]
-            if len(projects) > 0:
-                for project in projects:
-                    inline_keyboard.append(
-                        [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
-                    )
-                replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-                await bot.send_message(
-                    chat_id=chat_id,
-                    reply_markup=replyKeyboard,
-                    text="Choose the project you want to remove.",
-                )
-            else:
+            if not projects:
                 await bot.send_message(chat_id=chat_id, text="No project to remove.")
+            for project in projects:
+                inline_keyboard.append(
+                    [InlineKeyboardButton(text=project["name"], callback_data=project["token"])]
+                )
+            replyKeyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+            await bot.send_message(
+                chat_id=chat_id,
+                reply_markup=replyKeyboard,
+                text="Choose the project you want to remove.",
+            )
         else:
             await bot.send_message(
                 chat_id=chat_id,
@@ -402,7 +397,7 @@ class Bot:
             )
         ]
         message = "Projects : \n"
-        if len(projects) == 0:
+        if not projects:
             message += "There is no project"
         for id, project in enumerate(projects):
             message += (

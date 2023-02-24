@@ -38,14 +38,8 @@ class Context:
             sys.exit()
 
         if not all(
-            key in self.config
-            for key in (
-                "gitlab-projects",
-                "log-level",
-                "passphrase",
-                "port",
-                "telegram-token",
-            )
+            required_key in self.config
+            for required_key in ("gitlab-projects", "passphrase", "telegram-token")
         ):
             print(
                 f"{self.directory}config.json seems to be misconfigured, please follow"
@@ -54,7 +48,7 @@ class Context:
             sys.exit()
 
         logging.basicConfig(
-            level=self.config["log-level"],
+            level=self.config.get("log-level", "INFO"),
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
 
