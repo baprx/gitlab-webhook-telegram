@@ -54,7 +54,7 @@ class App:
         self.bot = bot
 
     @routes.post("/")
-    async def handle_post(self, request):
+    async def handle_post(self, request: web.Request) -> None:
         token = request.headers["X-Gitlab-Token"]
         if self.context.is_authorized_project(token):
             type = request.headers["X-Gitlab-Event"]
@@ -81,21 +81,24 @@ class App:
             logging.warning("Unauthorized Gitlab webhook : token not in config.json")
             raise web.HTTPForbidden
 
-    async def run_web_server(self):
+    async def run_web_server(self) -> None:
         app = web.Application()
         app.add_routes([web.post("/", self.handle_post)])
         runner = web.AppRunner(app)
         await runner.setup()
-        site = web.TCPSite(runner, self.context.config["address"], self.context.config["port"])
+        site = web.TCPSite(
+            runner=runner,
+            host=self.context.config.get("address", "0.0.0.0"),
+            port=self.context.config.get("port", 8080),
+        )
         await site.start()
 
-    async def run(self, bot: Bot, context: Context):
+    async def run(self) -> None:
         """
         run is called when the app starts
         """
         logging.info(
-            "Starting gitlab-webhook-telegram app on http://localhost:"
-            + str(context.config["port"])
+            f"Starting gitlab-webhook-telegram app on http://localhost:{self.context.config.get('port', 8080)}"
         )
         await self.run_web_server()
         while True:
