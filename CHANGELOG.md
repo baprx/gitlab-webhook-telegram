@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.0] - 2023-02-24
+## [1.1.1] - 2023-02-25
 
 ### Bug Fixes
 
@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Documentation
 
 - Update config example
+- Track issues in KNOWN_ISSUES.md
 
 ### Features
 
@@ -36,6 +37,11 @@ All notable changes to this project will be documented in this file.
 - Update dependency black to v22.12.0
 - Update dependency pre-commit to v3
 - Update dependency black to v23
+- Restore project_token parameter
+
+### Other
+
+- Bump to 1.1.0
 
 ## [1.0.9] - 2022-09-09
 
