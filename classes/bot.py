@@ -65,20 +65,14 @@ class Bot:
         self.token = token
         self.context = context
         self.application = Application.builder().token(self.token).build()
-        self.application.add_handler(CommandHandler("start", self.start, block=False))
-        self.application.add_handler(CommandHandler("addProject", self.add_project, block=False))
-        self.application.add_handler(
-            CommandHandler("removeProject", self.remove_project, block=False)
-        )
-        self.application.add_handler(
-            CommandHandler("changeVerbosity", self.change_verbosity, block=False)
-        )
-        self.application.add_handler(
-            CommandHandler("listProjects", self.list_projects, block=False)
-        )
-        self.application.add_handler(CommandHandler("help", self.help, block=False))
-        self.application.add_handler(CallbackQueryHandler(self.button, block=False))
-        self.application.add_handler(MessageHandler(filters.TEXT, self.message, block=False))
+        self.application.add_handler(CommandHandler("start", self.start))
+        self.application.add_handler(CommandHandler("addProject", self.add_project))
+        self.application.add_handler(CommandHandler("removeProject", self.remove_project))
+        self.application.add_handler(CommandHandler("changeVerbosity", self.change_verbosity))
+        self.application.add_handler(CommandHandler("listProjects", self.list_projects))
+        self.application.add_handler(CommandHandler("help", self.help))
+        self.application.add_handler(CallbackQueryHandler(self.button))
+        self.application.add_handler(MessageHandler(filters.TEXT, self.message))
         self.bot = self.application.bot
         self.username = None
 
