@@ -13,13 +13,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Get version number
-        id: latest_release
-        uses: pozetroninc/github-action-get-latest-release@master
-        with:
-          repository: BapRx/gitlab-webhook-telegram
-          excludes: prerelease, draft
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get tag version number
+        id: current_tag
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -36,4 +32,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: baprx/gitlab-webhook-telegram:${{ steps.latest_release.outputs.release }}
+          tags: baprx/gitlab-webhook-telegram:${{ steps.current_tag.outputs.tag }}
