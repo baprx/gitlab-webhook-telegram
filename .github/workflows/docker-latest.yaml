@@ -3,7 +3,8 @@ name: Build and push Docker images (latest)
 
 on:
   push:
-    branches: ["master"]
+    branches:
+      - master
 
 jobs:
   docker-latest:
