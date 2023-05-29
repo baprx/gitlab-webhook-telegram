@@ -2,7 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2023-05-29
+
+### Bug Fixes
+
+- Convert username to lowercase
+- Add step to retrieve last tag
+
+### Miscellaneous Tasks
+
+- Update dependency pre-commit to v3.1.1
+- Add ruff
+- Add Docker build actions
+- Rename step
+- Update dependency pre-commit to v3.2.0
+- Update dependency pre-commit to v3.2.1
+- Update dependency python-telegram-bot to v20.2
+- Update dependency black to v23.3.0
+- Update dependency pre-commit to v3.2.2
+- Update dependency pre-commit to v3.3.0
+- Update dependency pre-commit to v3.3.1
+- Update dependency python-telegram-bot to v20.3
+- Update dependency pre-commit to v3.3.2
+- Update dependency emoji to v2.4.0
+- Bump pre-commits
+
 ## [1.1.1] - 2023-02-25
+
+### Documentation
+
+- Track issues in KNOWN_ISSUES.md
+
+### Miscellaneous Tasks
+
+- Restore project_token parameter
+- Update CHANGELOG.md
+
+## [1.1.0] - 2023-02-25
 
 ### Bug Fixes
 
@@ -11,7 +47,6 @@ All notable changes to this project will be documented in this file.
 ### Documentation
 
 - Update config example
-- Track issues in KNOWN_ISSUES.md
 
 ### Features
 
@@ -37,7 +72,6 @@ All notable changes to this project will be documented in this file.
 - Update dependency black to v22.12.0
 - Update dependency pre-commit to v3
 - Update dependency black to v23
-- Restore project_token parameter
 
 ### Other
 
