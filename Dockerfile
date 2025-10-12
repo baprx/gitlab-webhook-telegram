@@ -9,4 +9,4 @@ RUN apk add --no-cache --virtual .build-deps gcc musl-dev \
 
 EXPOSE 8080
 
-CMD python main.py
+CMD ["python" ,"main.py"]
